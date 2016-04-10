@@ -5,7 +5,7 @@ var instances = [];
 var users = [];
 
 for (var i = 0; i < 100; i++) {
-	var number = Math.floor((Math.random() * 10000) + 3000);
+	var number = Math.floor((Math.random() * 10000) + 5000);
 	users.push({
 		name: 'Name Test ' + number,
 		email: 'emailtest' + number + '@gmail.com',
@@ -15,13 +15,15 @@ for (var i = 0; i < 100; i++) {
 
 async.eachSeries(users, (item, callback) => {
 	console.log('test ->',item);
-	var current = new RocketChat();
-	current.register(item.name, item.email, item.pass)
+	var current = instances.length;
+	instances[current] = new RocketChat();
+	instances[current].register(item.name, item.email, item.pass)
 		.then(() => {
-			current.enterRoom('c', 'general');
-			return current.sendMessage('GENERAL', 'hello, my name is '+item.name);
+			instances[current].enterRoom('c', 'general');
+			return instances[current].sendMessage('GENERAL', 'hello, my name is '+item.name);
 		})
 		.then(result => {
+			console.log('sendMessage ->',result);
 			callback(null, result);
 		})
 		.catch(error => {
@@ -29,15 +31,24 @@ async.eachSeries(users, (item, callback) => {
 			// callback(error);
 			callback(null, error);
 		});
-
-	instances.push(current);
 });
 
 process.on('SIGINT', () => {
-	for (var i = 0; i < instances.length; i++) {
-		console.log('disconnecting ->',i);
-		instances[i].asteroid.disconnect();
-	}
+	// console.log('instances ->',instances);
+	async.eachSeries(instances, (item, callback) => {
+		item.sendMessage('GENERAL', 'disconnecting')
+			.then(() => {
+				item.asteroid.logout();
+				item.asteroid.disconnect();
+				setTimeout(() => {
+					callback(null, true);
+				}, 500);
+			})
+			.catch(error => {
+				console.log('error ->',error);
+				callback(null, error);
+			})
+	});
 });
 // rocket = new RocketChat();
 // rocket.login('diego', 'diego');
