@@ -48,9 +48,13 @@ class RocketChat {
 
 			if (msg.collection === 'rocketchat_room' && this.openedRoom === null) {
 				this.openedRoom = msg.id;
-				this.roomsMap[msg.fields.type + msg.fields.name] = msg.id;
+				this.roomsMap[msg.fields.t + msg.fields.name] = msg.id;
 				this.clearRoomStreams(msg.id);
 			}
+
+			// if (msg.collection === 'stream-messages') {
+			// 	console.log('message ->',msg.fields);
+			// }
 			var collection = msg.collection;
 			var id = msg.id;
 			var fields = msg.fields;
