@@ -49,7 +49,8 @@ class RocketChat {
 			if (msg.collection === 'rocketchat_room' && this.openedRoom === null) {
 				this.openedRoom = msg.id;
 				this.roomsMap[msg.fields.t + msg.fields.name] = msg.id;
-				this.clearRoomStreams(msg.id);
+
+				this.enterRoomHooks(msg.id);
 			}
 
 			// if (msg.collection === 'stream-messages') {
@@ -89,6 +90,17 @@ class RocketChat {
 		this.asteroid.subscribe('activeUsers');
 		this.asteroid.subscribe('meteor_autoupdate_clientVersions');
 		this.asteroid.subscribe('stream-messages', null);
+	}
+
+	enterRoomHooks(roomId) {
+		this.asteroid.call('getRoomModeratorsAndOwners', roomId);
+		this.asteroid.call('loadHistory', roomId, null, 50, new Date());
+
+		this.asteroid.subscribe('filteredUsers');
+		this.asteroid.subscribe('channelAutocomplete', null);
+		this.asteroid.subscribe('fullUserData', null, 1);
+
+		this.clearRoomStreams(roomId);
 	}
 
 	clearUserStreams() {
@@ -157,13 +169,6 @@ class RocketChat {
 					reject(error);
 				});
 		});
-
-
-		// this.asteroid.call('getUsernameSuggestion')
-			// .catch(error => {
-			// 	console.log("Error");
-			// 	console.error(error);
-			// });
 	}
 
 	enterRoom(type, name) {
@@ -177,14 +182,6 @@ class RocketChat {
 
 	sendMessage(roomId, message) {
 		return this.asteroid.call('sendMessage', { msg: message, rid: roomId });
-			// .then(result => {
-			// 	console.log("Success");
-			// 	console.log(result);
-			// })
-			// .catch(error => {
-			// 	console.log("Error");
-			// 	console.error(error);
-			// });
 	}
 }
 
